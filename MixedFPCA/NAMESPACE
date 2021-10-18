@@ -1,0 +1,2 @@
+export("LFPCA", "LFPCA_3_level", "multilevel_pca",
+       "multilevel_pca_new", "plot.LFPCA", "rep.row")
