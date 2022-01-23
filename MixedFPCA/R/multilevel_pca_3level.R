@@ -365,10 +365,10 @@ multilevel_pca_new = function(Y = NULL, id = NULL, visit=NULL, day = NULL,
   #   for(j in 1:K3) int3[ i ,j] = sum( resid.temp2[i,] * fpca3.vectors[,j] ) * kx
   # }
   #
-  s1 = matrix(NA, M*J*K, K1)
-  s2 = matrix(NA, M*J*K, K2)
-  s3 = matrix(NA, M*J*K, K3)
-  
+  # s1 = matrix(NA, M*J*K, K1)
+  # s2 = matrix(NA, M*J*K, K2)
+  # s3 = matrix(NA, M*J*K, K3)
+  # 
   # resid.temp2.svd = svd(t(resid.temp2))
   # V_t = resid.temp2.svd$u
   # Sigma_u = diag(resid.temp2.svd$d)
@@ -377,50 +377,82 @@ multilevel_pca_new = function(Y = NULL, id = NULL, visit=NULL, day = NULL,
   # cross.integral12 = t(t(V_t)%*%fpca1.vectors)%*%(t(V_t)%*%fpca2.vectors)# * kx # Phi_1 * t(Phi_2)
   # cross.integral13 = t(t(V_t)%*%fpca1.vectors)%*%(t(V_t)%*%fpca3.vectors)# * kx # Phi_1 * t(Phi_3)
   # cross.integral23 = t(t(V_t)%*%fpca2.vectors)%*%(t(V_t)%*%fpca3.vectors)# * kx # Phi_2 * t(Phi_3)
-  cross.integral12 = t(fpca1.vectors)%*%(fpca2.vectors)# * kx # Phi_1 * t(Phi_2)
-  cross.integral13 = t(fpca1.vectors)%*%(fpca3.vectors)# * kx # Phi_1 * t(Phi_3)
-  cross.integral23 = t(fpca2.vectors)%*%(fpca3.vectors)# * kx # Phi_2 * t(Phi_3)
+  # cross.integral12 = t(fpca1.vectors)%*%(fpca2.vectors)# * kx # Phi_1 * t(Phi_2)
+  # cross.integral13 = t(fpca1.vectors)%*%(fpca3.vectors)# * kx # Phi_1 * t(Phi_3)
+  # cross.integral23 = t(fpca2.vectors)%*%(fpca3.vectors)# * kx # Phi_2 * t(Phi_3)
+  # 
+  # 
+  # D11 = diag(rep(1,K1))*J*K
+  # D12 = kronecker(t(rep(1,J)), cross.integral12 * K)
+  # D13 = kronecker(t(rep(1,J*K)),cross.integral13)
+  # D1 = cbind(D11, D12, D13)
+  # #D22 = kronecker(diag(rep(1,J)), diag(rep(1,K2))*J*K) 
+  # D22 = kronecker(diag(rep(1,J)), diag(rep(1,K2))*K) 
+  # D23 = kronecker(diag(rep(1,J)),kronecker(t(rep(1,K)),cross.integral23))
+  # D2 = cbind(t(D12), D22, D23)
+  # D33 = kronecker(diag(rep(1,J*K)),diag(rep(1,K3)))
+  # D3 = cbind(t(D13), t(D23), D33)
+  # D = rbind(D1, D2, D3)
   
+  # for(m in 1:M)
+  # {
+  #   index.m = ( (m-1) * J * K  + 1 ) : (m*J*K)
+  #   # Y_hat1 = t(t(V_t)%*%fpca1.vectors) %*% Sigma_u %*% t(U_t[index.m,]) %*% rep(1,J*K)
+  #   # Y_hat2 = matrix(t(t(V_t)%*%fpca2.vectors) %*% Sigma_u %*% t(U_t[index.m,]) %*% kronecker(rep(1,K),diag(rep(1,J))),K2*J, 1, byrow = TRUE)
+  #   # Y_hat3 = matrix(t(t(V_t)%*%fpca3.vectors) %*% Sigma_u %*% t(U_t[index.m,]), K3 * J *K, 1, byrow = TRUE)
+  #   Y_hat1 = t(fpca1.vectors) %*% t(resid.temp2[index.m,]) %*% rep(1,J*K)
+  #   Y_hat2 = matrix(t(fpca2.vectors) %*% t(resid.temp2[index.m,]) %*% kronecker(rep(1,K),diag(rep(1,J))),K2*J, 1, byrow = TRUE)
+  #   Y_hat3 = matrix(t(fpca3.vectors) %*% t(resid.temp2[index.m,]) , K3 * J *K, 1, byrow = TRUE)
+  #   xi.temp = ginv(D) %*% rbind(Y_hat1, Y_hat2, Y_hat3)
+  #   s1[index.m,] = matrix(rep(xi.temp[1:K1], each=J*K), nrow=J*K)
+  #   #s2[index.m,] = matrix(rep(xi.temp[(K1+1):(K1+K2*J)], each=K), nrow=J*K)
+  #   s2[index.m,] = apply(matrix(xi.temp[(K1+1):(K1+K2*J)], nrow=J,byrow = TRUE),2,function(x) rep.row(x,K))
+  #   s3[index.m,] = matrix(xi.temp[(K1+K2*J+1):(K1+K2*J+K3*J*K)],nrow = J*K)
+  # }
   
-  D11 = diag(rep(1,K1))*J*K
-  D12 = kronecker(t(rep(1,J)), cross.integral12 * K)
-  D13 = kronecker(t(rep(1,J*K)),cross.integral13)
-  D1 = cbind(D11, D12, D13)
-  #D22 = kronecker(diag(rep(1,J)), diag(rep(1,K2))*J*K) 
-  D22 = kronecker(diag(rep(1,J)), diag(rep(1,K2))*K) 
-  D23 = kronecker(diag(rep(1,J)),kronecker(t(rep(1,K)),cross.integral23))
-  D2 = cbind(t(D12), D22, D23)
-  D33 = kronecker(diag(rep(1,J*K)),diag(rep(1,K3)))
-  D3 = cbind(t(D13), t(D23), D33)
-  D = rbind(D1, D2, D3)
-  
+  s1 = matrix(NA, M, K1)
+  s2 = matrix(NA, I, K2)
+  s3 = matrix(NA, S, K3)
+  subject.ind <- unlist(sapply(id, function(su){which(unique(id[order(id)]) == su)}))
+  #subject.visit.ind <- unlist(sapply(id.visit, function(su){which(unique(id.visit[order(id.visit)]) == su)}))
+  subject.visit.ind <- unlist(sapply(id.visit, function(su){which(unique(id.visit[order(id,visit)]) == su)}))
+  id.visit.mat <- data.frame(Y.df.new[,c("id","visit")] %>% group_by(id,visit) %>% slice(1))
+  #Z.X = kronecker(Diagonal(M)[subject.ind, ], phi.0) + 
+  #  kronecker(Diagonal(S, time) %*% Diagonal(M)[subject.ind, ], phi.1)  
+  #Z.U = kronecker(diag(rep(1,J)),kronecker(t(rep(1,K)),fpca2.vectors))
   for(m in 1:M)
   {
-    index.m = ( (m-1) * J * K  + 1 ) : (m*J*K)
-    # Y_hat1 = t(t(V_t)%*%fpca1.vectors) %*% Sigma_u %*% t(U_t[index.m,]) %*% rep(1,J*K)
-    # Y_hat2 = matrix(t(t(V_t)%*%fpca2.vectors) %*% Sigma_u %*% t(U_t[index.m,]) %*% kronecker(rep(1,K),diag(rep(1,J))),K2*J, 1, byrow = TRUE)
-    # Y_hat3 = matrix(t(t(V_t)%*%fpca3.vectors) %*% Sigma_u %*% t(U_t[index.m,]), K3 * J *K, 1, byrow = TRUE)
-    Y_hat1 = t(fpca1.vectors) %*% t(resid.temp2[index.m,]) %*% rep(1,J*K)
-    Y_hat2 = matrix(t(fpca2.vectors) %*% t(resid.temp2[index.m,]) %*% kronecker(rep(1,K),diag(rep(1,J))),K2*J, 1, byrow = TRUE)
-    Y_hat3 = matrix(t(fpca3.vectors) %*% t(resid.temp2[index.m,]) , K3 * J *K, 1, byrow = TRUE)
-    xi.temp = ginv(D) %*% rbind(Y_hat1, Y_hat2, Y_hat3)
-    s1[index.m,] = matrix(rep(xi.temp[1:K1], each=J*K), nrow=J*K)
-    #s2[index.m,] = matrix(rep(xi.temp[(K1+1):(K1+K2*J)], each=K), nrow=J*K)
-    s2[index.m,] = apply(matrix(xi.temp[(K1+1):(K1+K2*J)], nrow=J,byrow = TRUE),2,function(x) rep.row(x,K))
-    s3[index.m,] = matrix(xi.temp[(K1+K2*J+1):(K1+K2*J+K3*J*K)],nrow = J*K)
+    #print(m)
+    index.m = which(Y.df.new$id == m)
+    index.j = which(id.visit.mat$id == m)
+    n_i = length(index.m)
+    n_ij = length(unique(Y.df.new$visit[which(Y.df.new$id == m)]))
+    B.X = kronecker(rep(1,n_i), fpca1.vectors)# +
+      #kronecker(Diagonal(length(index.m), time[index.m]) %*% rep(1,length(index.m)) , phi.1)
+      #kronecker(time[index.m], phi.1)
+    U.ind = rep(1:n_ij,table(subject.visit.ind[which(subject.ind==m)]))
+    B.U = kronecker(Diagonal(n_ij)[U.ind, ],fpca2.vectors)
+    #B.U1 = kronecker(Diagonal(2),kronecker(rep(1,3),fpca2.vectors))
+    B.W = kronecker(Diagonal(n_i), fpca3.vectors)
+    B = cbind(B.X,B.U,B.W)
+    xi_temp = solve(crossprod(B),t(B) %*% as.vector(c(t(Y.tilde[index.m,]))))
+    s1[m,] = t(matrix(xi_temp[1:K1], K1, 1))
+    s2[index.j,] = t(matrix(xi_temp[(K1+1):(K1+K2*n_ij)],  K2, n_ij))
+    s3[index.m,] = t(matrix(xi_temp[(K1+K2*n_ij+1):(K1+K2*n_ij+K3*n_i)],K3,n_i))
   }
-  s1 = as.data.frame(cbind(dat[,1:3],s1)) %>% group_by(id) %>% slice(1)
-  s1$visit = NULL
-  s1$day = NULL
-  names(s1)[2:ncol(s1)] = paste0("lv1_",names(s1)[2:ncol(s1)])
   
-  s2 = as.data.frame(cbind(dat[,1:3],s2)) %>% group_by(id, visit) %>% slice(1)
-  s2$day = NULL
-  names(s2)[3:ncol(s2)] = paste0("lv2_",names(s2)[3:ncol(s2)])
-  
-  s3 = as.data.frame(cbind(dat[,1:3],s3))
-  s3 = merge(x = Y.df.new[,c(1:3)], y = s3, all.x = T)
-  names(s3)[4:ncol(s3)] = paste0("lv3_",names(s3)[4:ncol(s3)])
+  # s1 = as.data.frame(cbind(dat[,1:3],s1)) %>% group_by(id) %>% slice(1)
+  # s1$visit = NULL
+  # s1$day = NULL
+  # names(s1)[2:ncol(s1)] = paste0("lv1_",names(s1)[2:ncol(s1)])
+  # 
+  # s2 = as.data.frame(cbind(dat[,1:3],s2)) %>% group_by(id, visit) %>% slice(1)
+  # s2$day = NULL
+  # names(s2)[3:ncol(s2)] = paste0("lv2_",names(s2)[3:ncol(s2)])
+  # 
+  # s3 = as.data.frame(cbind(dat[,1:3],s3))
+  # s3 = merge(x = Y.df.new[,c(1:3)], y = s3, all.x = T)
+  # names(s3)[4:ncol(s3)] = paste0("lv3_",names(s3)[4:ncol(s3)])
   
   
   #########################################################################################

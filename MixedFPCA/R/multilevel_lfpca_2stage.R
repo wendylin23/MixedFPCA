@@ -33,9 +33,10 @@ LFPCA_3_level = function(Y = NULL, id = NULL, visit=NULL, day = NULL,
     Y_sm = matrix(NA,ncol=ncol(Y),nrow=nrow(Y))
     tY = 1:ncol(Y_sm)
     
-    for(i in 1:nrow(Y_sm)){
-      Y_sm[i,] = gam(Y[i,] ~ s(tY,k = nk),na.action = na.omit)$fitted.values
-    }
+    # for(i in 1:nrow(Y_sm)){
+    #   Y_sm[i,] = gam(Y[i,] ~ s(tY,k = nk),na.action = na.omit)$fitted.values
+    # }
+    Y_sm = t(apply(Y, 1, function(x) gam(x~s(tY,k = nk),na.action = na.omit)$fitted.values))
     Y = Y_sm
   }
   
@@ -183,13 +184,17 @@ LFPCA_3_level = function(Y = NULL, id = NULL, visit=NULL, day = NULL,
     K.XU[ij.ind,,] = K.XU.ij
     for(i in 1:length(ind1))
     {
+      #print(i)
       if(ind1[i] != ind2[i])
       {
         ij1j2.denom = id.visit.vec[ind1[i]] * id.visit.vec[ind2[i]]
         Y.tilde.ij1 = Y.tilde[(id.visit==names(id.visit.vec)[ind1[i]]),]
         Y.tilde.ij2 = Y.tilde[(id.visit==names(id.visit.vec)[ind2[i]]),]
         #K.XU[i,,] = 1/ij1j2.denom * matrix(colSums(kronecker(Y.tilde.ij1,Y.tilde.ij2)),N,N)
-        K.XU[i,,] = 1/ij1j2.denom * matrix(colSums(kronecker(Y.tilde.ij1,Y.tilde.ij2)),N,N)
+        if(ij1j2.denom==1)
+          K.XU[i,,] = 1/ij1j2.denom * matrix(kronecker(Y.tilde.ij1,Y.tilde.ij2),N,N)
+        else
+          K.XU[i,,] = 1/ij1j2.denom * matrix(colSums(kronecker(Y.tilde.ij1,Y.tilde.ij2)),N,N)
         #K.XU[i,,] = 1/ij1j2.denom * colSums(Y.tilde.ij1) %*% t(colSums(Y.tilde.ij2))
       }
     }
@@ -282,9 +287,9 @@ LFPCA_3_level = function(Y = NULL, id = NULL, visit=NULL, day = NULL,
     }
   }
   ###     estimate eigen vectors
-  fpca1.vectors = e1$vectors[, 1:K1]# * sqrt(1/kx)
+  fpca1.vectors = as.matrix(e1$vectors[, 1:K1])# * sqrt(1/kx)
   fpca2.vectors = as.matrix(e2$vectors[, 1:K2])# * sqrt(1/kx)
-  fpca3.vectors = e3$vectors[, 1:K3]# * sqrt(1/kx)
+  fpca3.vectors = as.matrix(e3$vectors[, 1:K3])# * sqrt(1/kx)
   
   ###     Estimate amount of variability explained by between-day, 
   ###     between-visit and between-subject
@@ -326,7 +331,7 @@ LFPCA_3_level = function(Y = NULL, id = NULL, visit=NULL, day = NULL,
   s3 = matrix(NA, S, K3)
   
   subject.ind <- unlist(sapply(id, function(su){which(unique(id[order(id)]) == su)}))
-  subject.visit.ind <- unlist(sapply(id.visit, function(su){which(unique(id.visit[order(id.visit)]) == su)}))
+  subject.visit.ind <- unlist(sapply(id.visit, function(su){which(unique(id.visit[order(id,visit)]) == su)}))
   id.visit.mat <- data.frame(Y.df.new[,c("id","visit")] %>% group_by(id,visit) %>% slice(1))
   #Z.X = kronecker(Diagonal(M)[subject.ind, ], phi.0) + 
   #  kronecker(Diagonal(S, time) %*% Diagonal(M)[subject.ind, ], phi.1)  
