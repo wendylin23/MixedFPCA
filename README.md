@@ -1,3 +1,3 @@
 # MixedFPCA
 
-# Functional principal models for multilevel data 
+Functional principal models for multilevel data 
